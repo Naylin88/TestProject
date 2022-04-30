@@ -4,5 +4,9 @@
 
 <div class="text-center">
     <h3 class="display-4">Welcome</h3>
-    
+    <hr />
+    <form method="post" asp-controller="FileUpload" asp-action="Upload" enctype="multipart/form-data">
+        <input type="file" name="file"/>
+        <button type="submit" >Upload</button>
+    </form>
 </div>
