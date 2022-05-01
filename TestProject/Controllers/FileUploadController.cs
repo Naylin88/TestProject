@@ -38,8 +38,7 @@ namespace TestProject.Controllers
             {
                 using (var streamReader = new StreamReader(file.OpenReadStream()))
                 {
-                    while (!streamReader.EndOfStream) transactionList.Add(streamReader.ReadLine());
-                    
+                    while (!streamReader.EndOfStream) transactionList.Add(streamReader.ReadLine());                    
                 }
                 foreach (var transaction in transactionList)
                 {
@@ -54,19 +53,23 @@ namespace TestProject.Controllers
                         
                     }) ;
                 }
+                
                 _context.AddRange(transactions); 
                 await _context.SaveChangesAsync();
                 
                 return Ok(200);
             }
-            else { return BadRequest(); }
+            if (file.FileName.EndsWith(".xml")) 
+            {
+                return Ok("good xml");
+            }
+            else { return BadRequest("Invalid File Extension!"); }
 
         }
         public IActionResult Report()
         {
             return View();
         }
-
       
     }
 }
