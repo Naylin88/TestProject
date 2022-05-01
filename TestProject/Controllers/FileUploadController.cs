@@ -4,10 +4,15 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml;
+using System.Xml.Linq;
+using System.Xml.Serialization;
 using TestProject.Data;
 using TestProject.Models;
 
@@ -29,47 +34,95 @@ namespace TestProject.Controllers
             return View();
         }
 
-        public async Task<IActionResult> Upload(IFormFile file) 
+        public async Task<IActionResult> Upload(IFormFile file)
         {
             var transactions = new List<Transaction>();
             var transactionList = new List<string>();
-           
-            if (file.FileName.EndsWith(".csv"))
+            try
             {
-                using (var streamReader = new StreamReader(file.OpenReadStream()))
+                if (file.FileName.EndsWith(".csv"))
                 {
-                    while (!streamReader.EndOfStream) transactionList.Add(streamReader.ReadLine());                    
-                }
-                foreach (var transaction in transactionList)
-                {
-                    transactions.Add(new Transaction
+
+                    using (var streamReader = new StreamReader(file.OpenReadStream()))
                     {
-                        Id = Guid.NewGuid(),
-                        TransactionId = transaction.Split(',')[0],
-                        Amount = Convert.ToDecimal(transaction.Split(',')[1]),
-                        CurrencyCode = transaction.Split(',')[2],
-                        TransactionDate = DateTime.ParseExact((transaction.Split(',')[3]),"dd/MM/yyyy HH:mm:ss",CultureInfo.InvariantCulture),
-                        Status = transaction.Split(',')[4]
-                        
-                    }) ;
+                        while (!streamReader.EndOfStream) transactionList.Add(streamReader.ReadLine());
+                    }
+                   
+                    foreach (var transaction in transactionList)
+                    {
+                        if (transaction == null) { return BadRequest("Invalid Field"); }
+                        transactions.Add(new Transaction
+                        {
+                            Id = Guid.NewGuid(),
+                            TransactionId = transaction.Split(',')[0],
+                            Amount = Convert.ToDecimal(transaction.Split(',')[1]),
+                            CurrencyCode = transaction.Split(',')[2],
+                            TransactionDate = DateTime.ParseExact((transaction.Split(',')[3]), "dd/MM/yyyy HH:mm:ss", CultureInfo.InvariantCulture),
+                            Status = transaction.Split(',')[4]
+
+                        });
+                    }
+
+                    _context.AddRange(transactions);
+                    await _context.SaveChangesAsync();
+
+                    return Ok(200);
                 }
-                
-                _context.AddRange(transactions); 
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.ToString());
+            }
+
+            if (file.FileName.EndsWith(".xml"))
+            {
+                try
+                {
+                    var doc = new XmlDocument();
+                    using (var streamReader = new StreamReader(file.OpenReadStream()))
+                    {
+                        var contents = streamReader.ReadToEnd();
+                        doc.LoadXml(contents);
+
+                        XmlNodeList nodes = doc.SelectNodes("/Transactions/Transaction");
+                        foreach (XmlNode node in nodes)
+                        {
+                            string transactionId = node.Attributes?.GetNamedItem("id")?.InnerText;
+                            string date = node.ChildNodes[0]?.InnerText;
+                            string amount = node.ChildNodes[1].FirstChild?.InnerText;
+                            string currencyCode = node.ChildNodes[1].LastChild?.InnerText;
+                            string status = node.ChildNodes[2]?.InnerText;
+
+                            if (node == null) { return BadRequest("Invalid Field"); };
+
+                            transactions.Add(new Transaction
+                            {
+                                Id = Guid.NewGuid(),
+                                TransactionId = transactionId.ToString(),
+                                Amount = Convert.ToDecimal(amount),
+                                CurrencyCode = currencyCode,
+                                TransactionDate = DateTime.ParseExact(date, "s", null),
+                                Status = status
+
+                            });
+
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex.ToString());
+                }
+                _context.AddRange(transactions);
                 await _context.SaveChangesAsync();
-                
                 return Ok(200);
             }
-            if (file.FileName.EndsWith(".xml")) 
-            {
-                return Ok("good xml");
-            }
+       
             else { return BadRequest("Invalid File Extension!"); }
-
         }
         public IActionResult Report()
         {
             return View();
-        }
-      
+        }     
     }
 }
