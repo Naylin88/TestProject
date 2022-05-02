@@ -5,7 +5,10 @@ namespace TestProject.Data
 {
     public class TestProjectContext : DbContext
     {
-        public TestProjectContext(DbContextOptions<TestProjectContext> options) : base(options) { }
+        public TestProjectContext(DbContextOptions<TestProjectContext> options) : base(options) 
+        {
+
+        }
         public DbSet<Transaction> Transactions { get; set; }
     }
 }
