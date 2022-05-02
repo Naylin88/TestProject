@@ -44,7 +44,12 @@ namespace TestProject.Controllers
                    
                     foreach (var transaction in transactionList)
                     {
-                        if (transaction == null) { return BadRequest("Invalid Field"); }
+                        if (string.IsNullOrEmpty(transaction.Split(',')[0])) return BadRequest("Invalid Field");
+                        if (string.IsNullOrEmpty(transaction.Split(',')[1])) return BadRequest("Invalid Field");
+                        if (string.IsNullOrEmpty(transaction.Split(',')[2])) return BadRequest("Invalid Field");
+                        if (string.IsNullOrEmpty(transaction.Split(',')[3])) return BadRequest("Invalid Field");
+                        if (string.IsNullOrEmpty(transaction.Split(',')[4])) return BadRequest("Invalid Field");
+
                         transactions.Add(new Transaction
                         {
                             Id = Guid.NewGuid(),
@@ -81,13 +86,11 @@ namespace TestProject.Controllers
                         XmlNodeList nodes = doc.SelectNodes("/Transactions/Transaction");
                         foreach (XmlNode node in nodes)
                         {
-                            string transactionId = node.Attributes?.GetNamedItem("id")?.InnerText;
-                            string date = node.ChildNodes[0]?.InnerText;
-                            string amount = node.ChildNodes[1].FirstChild?.InnerText;
-                            string currencyCode = node.ChildNodes[1].LastChild?.InnerText;
-                            string status = node.ChildNodes[2]?.InnerText;
-
-                            if (node == null) { return BadRequest("Invalid Field"); };
+                            string transactionId = node.Attributes?.GetNamedItem("id")?.InnerText; if (string.IsNullOrEmpty(transactionId)) return BadRequest("Invalid Field");
+                            string date = node.ChildNodes[0]?.InnerText; if (string.IsNullOrEmpty(date)) return BadRequest("Invalid Field");
+                            string amount = node.ChildNodes[1].FirstChild?.InnerText; if (string.IsNullOrEmpty(amount)) return BadRequest("Invalid Field");
+                            string currencyCode = node.ChildNodes[1].LastChild?.InnerText; if (string.IsNullOrEmpty(currencyCode)) return BadRequest("Invalid Field");
+                            string status = node.ChildNodes[2]?.InnerText; if (string.IsNullOrEmpty(status)) return BadRequest("Invalid Field");
 
                             transactions.Add(new Transaction
                             {
@@ -99,7 +102,6 @@ namespace TestProject.Controllers
                                 Status = status
 
                             });
-
                         }
                     }
                 }
