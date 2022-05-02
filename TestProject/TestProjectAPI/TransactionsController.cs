@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -37,11 +38,11 @@ namespace TestProject.TestProjectAPI
                              payment = tran.Amount + " " + tran.CurrencyCode,
                              status = tran.Status
                          };
-
             if (result == null)
             {
                 return NotFound();
             }
+
             return Ok(result);
         }
         [Route("GetByStatus")]
@@ -54,17 +55,29 @@ namespace TestProject.TestProjectAPI
                              payment = tran.Amount + " " + tran.CurrencyCode,
                              status = tran.Status
                          };
-
             if (result == null)
             {
                 return NotFound();
             }
+            
             return Ok(result);
         }
         [Route("GetByDateRange")]
-        public ActionResult<IEnumerable<Transaction>> GetByDateRange(string fromDate, string toDate)
+        public ActionResult<IEnumerable<Transaction>> GetByDateRange(DateTime fromDate, DateTime toDate)
         {
-            return Ok();
+            var result = from tran in _context.Transactions.Where(d => d.TransactionDate >= fromDate && d.TransactionDate <= toDate)
+                         select new
+                         {
+                             id = tran.TransactionId,
+                             payment = tran.Amount + " " + tran.CurrencyCode,
+                             status = tran.Status
+                         };
+            if (result == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(result);
         }
     }
 }
